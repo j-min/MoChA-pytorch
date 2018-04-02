@@ -5,9 +5,10 @@ from torch import nn
 from attention import MoChA
 
 
-class Decoder(nn.Module):
+class MoChADecoder(nn.Module):
     def __init__(self, enc_dim=10, dec_dim=10, embedding_dim=10, att_dim=10,
                  out_dim=10, vocab_size=100, chunk_size=3):
+        """RNN Decoder with Monotonic Chunkwise Attention"""
         super().__init__()
 
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
@@ -31,7 +32,7 @@ class Decoder(nn.Module):
         else:
             return Variable(torch.Tensor(batch_size, dec_dim).normal_())
 
-    def forward_soft(self, encoder_outputs, decoder_inputs):
+    def forward_train(self, encoder_outputs, decoder_inputs):
         """
         Args:
             encoder_outputs [batch_size, enc_sequence_length, enc_dim]
@@ -49,9 +50,13 @@ class Decoder(nn.Module):
         for i in range(dec_sequence_length):
             x = self.embedding(x)
             h = self.cell(x, h)
-            alpha, beta = self.attention.forward_soft(encoder_outputs, h, alpha)
+
+            # alpha: [batch_size, sequence_length]
+            # beta: [batch_size, sequence_length]
+            alpha, beta = self.attention.soft(encoder_outputs, h, alpha)
 
             # Weighted-sum
+            # [batch_size, out_dim]
             context = torch.sum(beta.unsqueeze(1) * encoder_outputs, dim=1)
 
             # [batch_size, out_dim]
@@ -65,7 +70,42 @@ class Decoder(nn.Module):
 
         return torch.stack(logit_list, dim=1)
 
-    def forward_hard(self, encoder_outputs):
-        all_finished = [False] * batch_size
-        pass
-#         while sum(all_finished) < batch_size:
+    def forward_test(self, encoder_outputs, max_dec_length=20):
+        """
+        Args:
+            encoder_outputs [batch_size, enc_sequence_length, enc_dim]
+            max_dec_length (int; default=20)
+        Return:
+            outputs: [batch_size, max_dec_length]
+        """
+        batch_size, enc_sequence_length, enc_dim = encoder_outputs.size()
+
+        x = self.init_x(batch_size)
+        h = self.init_h(batch_size)
+        monotonic_attention = None
+        output_list = []
+        for i in range(max_dec_length):
+            x = self.embedding(x)
+            h = self.cell(x, h)
+
+            # monotonic_attention (one-hot): [batch_size, sequence_length]
+            # chunkwise_attention (nonzero in chunk size): [batch_size, sequence_length]
+            monotonic_attention, chunkwise_attention = self.attention.hard(
+                encoder_outputs, h, monotonic_attention)
+
+            # Weighted-sum
+            # [batch_size, out_dim]
+            context = torch.sum(chunkwise_attention.unsqueeze(-1) * encoder_outputs, dim=1)
+
+            # [batch_size, out_dim]
+            attentional = self.tanh(self.combine_c_h(torch.cat([context, h], dim=1)))
+
+            # [batch_size, vocab_size]
+            logit = self.proj_vocab(attentional)
+
+            # Greedy Decoding
+            # [batch_size]
+            x = torch.max(logit, dim=1)[1]
+            output_list.append(x)
+
+        return torch.stack(output_list, dim=1)

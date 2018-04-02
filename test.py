@@ -1,30 +1,48 @@
 import unittest
-
-from decoder import Decoder
-
 import torch
 from torch.autograd import Variable
+
+from decoder import MoChADecoder
 
 
 class MoChATest(unittest.TestCase):
 
+    def setUp(self):
+        self.batch_size = 5
+        self.sequence_length = 40
+        self.chunk_size = 3
+        self.dim = 10
+        self.vocab_size = 100
+
     def test_soft(self):
+        """Soft Monotonic Chunkwise Attention"""
 
-        batch_size = 5
-        sequence_length = 10
-        chunk_size = 3
-        dim = 10
-        vocab_size = 100
-
-        enc_outputs = Variable(torch.Tensor(batch_size, sequence_length, dim).normal_()).cuda()
+        enc_outputs = Variable(torch.Tensor(
+            self.batch_size, self.sequence_length, self.dim).normal_())
         dec_inputs = Variable(torch.LongTensor(
-            batch_size, sequence_length).clamp_(min=0, max=vocab_size - 1)).cuda()
+            self.batch_size, self.sequence_length).clamp_(min=0, max=self.vocab_size - 1))
+        decoder = MoChADecoder(vocab_size=self.vocab_size, chunk_size=self.chunk_size)
 
-        decoder = Decoder(vocab_size=vocab_size, chunk_size=chunk_size).cuda()
+        if torch.cuda.is_available():
+            enc_outputs = enc_outputs.cuda()
+            dec_inputs = dec_inputs.cuda()
+            decoder = decoder.cuda()
+
         decoder.forward_train(enc_outputs, dec_inputs)
 
     def test_hard(self):
-        pass
+        """Hard Monotonic Chunkwise Attention"""
+
+        enc_outputs = Variable(torch.Tensor(
+            self.batch_size, self.sequence_length, self.dim).normal_())
+        decoder = MoChADecoder(
+            vocab_size=self.vocab_size, chunk_size=self.chunk_size)
+
+        if torch.cuda.is_available():
+            enc_outputs = enc_outputs.cuda()
+            decoder = decoder.cuda()
+
+        decoder.forward_test(enc_outputs)
 
 
 if __name__ == '__main__':
