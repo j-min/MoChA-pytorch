@@ -141,6 +141,13 @@ class MonotonicAttention(nn.Module):
             p_select = above_threshold * torch.cumsum(previous_attention, dim=1)
             attention = p_select * self.exclusive_cumprod(1 - p_select)
 
+            # Not attended => attend at last encoder output
+            # Assume that encoder outputs are not padded
+            attended = attention.sum(dim=1)
+            for batch_i in range(batch_size):
+                if not attended[batch_i]:
+                    attention[batch_i, -1] = 1
+
             # Ex)
             # p_select                        = [0, 0, 0, 1, 1, 0, 1, 1]
             # 1 - p_select                    = [1, 1, 1, 0, 0, 1, 0, 0]

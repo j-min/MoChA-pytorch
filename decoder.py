@@ -57,7 +57,7 @@ class MoChADecoder(nn.Module):
 
             # Weighted-sum
             # [batch_size, out_dim]
-            context = torch.sum(beta.unsqueeze(1) * encoder_outputs, dim=1)
+            context = torch.sum(beta.unsqueeze(-1) * encoder_outputs, dim=1)
 
             # [batch_size, out_dim]
             attentional = self.tanh(self.combine_c_h(torch.cat([context, h], dim=1)))
