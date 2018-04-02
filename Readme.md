@@ -2,6 +2,9 @@
 
 ## PyTorch Implementation of [Monotonic Chunkwise Attention](https://openreview.net/forum?id=Hko85plCW)
 
+## Requirements
+- PyTorch 0.4
+
 ## TODOs
 - [x] Soft MoChA
 - [x] Hard MoChA
@@ -10,7 +13,6 @@
 
 ## Model figure
 ![Model figure 1](imgs/attention_img.png)
-
 
 ## Linear Time Decoding
 It's not clear if [authors' TF implementation](https://github.com/craffel/mad/blob/master/example_decoder.py#L235) supports decoding in linear time.
