@@ -1,6 +1,4 @@
-# Monotonic Chunkwise Attention
-
-## PyTorch Implementation of [Monotonic Chunkwise Attention](https://openreview.net/forum?id=Hko85plCW)
+# PyTorch Implementation of [Monotonic Chunkwise Attention](https://openreview.net/forum?id=Hko85plCW)
 
 ## Requirements
 - PyTorch 0.4
