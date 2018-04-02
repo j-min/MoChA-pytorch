@@ -125,7 +125,7 @@ class MonotonicAttention(nn.Module):
             attention[:, 0] = torch.ones(batch_size)
             if torch.cuda.is_available:
                 attention = attention.cuda()
-            attention = Variable(attention)
+            attention = Variable(attention, requires_grad=False)
         else:
             # TODO: Linear Time Decoding
             # It's not clear if authors' TF implementation decodes in linear time.
@@ -236,6 +236,7 @@ class MoChA(MonotonicAttention):
         mask = torch.sparse.FloatTensor(i, v, monotonic_attention.size())
         mask = ~mask.to_dense().cuda().byte()
         mask = Variable(mask)
+
         # mask '-inf' energy before softmax
         masked_energy = chunk_energy.masked_fill_(mask, -float('inf'))
         return masked_energy
@@ -269,7 +270,6 @@ class MoChA(MonotonicAttention):
         """
         # hard attention (one-hot)
         # [batch_size, sequence_length]
-
         monotonic_attention = super().hard(encoder_outputs, decoder_h, previous_attention)
         chunk_energy = self.chunk_energy(encoder_outputs, decoder_h)
         masked_energy = self.chunkwise_attention_hard(monotonic_attention, chunk_energy)

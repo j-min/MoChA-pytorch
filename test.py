@@ -34,7 +34,7 @@ class MoChATest(unittest.TestCase):
         """Hard Monotonic Chunkwise Attention"""
 
         enc_outputs = Variable(torch.Tensor(
-            self.batch_size, self.sequence_length, self.dim).normal_())
+            self.batch_size, self.sequence_length, self.dim).normal_(), requires_grad=False)
         decoder = MoChADecoder(
             vocab_size=self.vocab_size, chunk_size=self.chunk_size)
 
