@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 from torch import nn
 
 from attention import MoChA
@@ -22,15 +21,15 @@ class MoChADecoder(nn.Module):
 
     def init_x(self, batch_size, sos_id=1):
         if torch.cuda.is_available:
-            return Variable(torch.cuda.LongTensor([sos_id] * batch_size))
+            return torch.cuda.LongTensor([sos_id] * batch_size)
         else:
-            return Variable(torch.LongTensor([sos_id] * batch_size))
+            return torch.LongTensor([sos_id] * batch_size)
 
     def init_h(self, batch_size, dec_dim=10):
         if torch.cuda.is_available:
-            return Variable(torch.cuda.FloatTensor(batch_size, dec_dim).normal_())
+            return torch.cuda.FloatTensor(batch_size, dec_dim).normal_()
         else:
-            return Variable(torch.Tensor(batch_size, dec_dim).normal_())
+            return torch.Tensor(batch_size, dec_dim).normal_()
 
     def forward_train(self, encoder_outputs, decoder_inputs):
         """

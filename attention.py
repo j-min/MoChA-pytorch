@@ -1,5 +1,4 @@
 import torch
-from torch.autograd import Variable
 from torch import nn
 import torch.nn.functional as F
 
@@ -57,9 +56,9 @@ class MonotonicAttention(nn.Module):
     def gaussian_noise(self, *size):
         """Additive gaussian nosie to encourage discreteness"""
         if torch.cuda.is_available():
-            return Variable(torch.cuda.FloatTensor(*size).normal_())
+            return torch.cuda.FloatTensor(*size).normal_()
         else:
-            return Variable(torch.Tensor(*size).normal_())
+            return torch.Tensor(*size).normal_()
 
     def safe_cumprod(self, x):
         """Numerically stable cumulative product by cumulative sum in log-space"""
@@ -72,9 +71,9 @@ class MonotonicAttention(nn.Module):
         """
         batch_size, sequence_length = x.size()
         if torch.cuda.is_available():
-            one_x = torch.cat([Variable(torch.ones(batch_size, 1).cuda()), x], dim=1)[:, :-1]
+            one_x = torch.cat([torch.ones(batch_size, 1).cuda(), x], dim=1)[:, :-1]
         else:
-            one_x = torch.cat([Variable(torch.ones(batch_size, 1)), x], dim=1)[:, :-1]
+            one_x = torch.cat([torch.ones(batch_size, 1), x], dim=1)[:, :-1]
         return torch.cumprod(one_x, dim=1)
 
     def soft(self, encoder_outputs, decoder_h, previous_alpha=None):
@@ -99,7 +98,6 @@ class MonotonicAttention(nn.Module):
             alpha[:, 0] = torch.ones(batch_size)
             if torch.cuda.is_available:
                 alpha = alpha.cuda()
-            alpha = Variable(alpha)
 
         else:
             alpha = p_select * cumprod_1_minus_p * \
@@ -125,7 +123,6 @@ class MonotonicAttention(nn.Module):
             attention[:, 0] = torch.ones(batch_size)
             if torch.cuda.is_available:
                 attention = attention.cuda()
-            attention = Variable(attention, requires_grad=False)
         else:
             # TODO: Linear Time Decoding
             # It's not clear if authors' TF implementation decodes in linear time.
@@ -179,7 +176,7 @@ class MoChA(MonotonicAttention):
         x_padded = x_padded.unsqueeze(1)
 
         # Apply conv1d with filter of all ones for moving sum
-        filters = Variable(torch.ones(1, 1, back + forward + 1), requires_grad=False)
+        filters = torch.ones(1, 1, back + forward + 1)
         if torch.cuda.is_available():
             filters = filters.cuda()
         x_sum = F.conv1d(x_padded, filters)
@@ -242,7 +239,6 @@ class MoChA(MonotonicAttention):
         v = torch.FloatTensor([1] * total_i)
         mask = torch.sparse.FloatTensor(i, v, monotonic_attention.size())
         mask = ~mask.to_dense().cuda().byte()
-        mask = Variable(mask)
 
         # mask '-inf' energy before softmax
         masked_energy = chunk_energy.masked_fill_(mask, -float('inf'))

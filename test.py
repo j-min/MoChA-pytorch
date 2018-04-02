@@ -1,6 +1,5 @@
 import unittest
 import torch
-from torch.autograd import Variable
 
 from decoder import MoChADecoder
 
@@ -17,10 +16,10 @@ class MoChATest(unittest.TestCase):
     def test_soft(self):
         """Soft Monotonic Chunkwise Attention"""
 
-        enc_outputs = Variable(torch.Tensor(
-            self.batch_size, self.sequence_length, self.dim).normal_())
-        dec_inputs = Variable(torch.LongTensor(
-            self.batch_size, self.sequence_length).clamp_(min=0, max=self.vocab_size - 1))
+        enc_outputs = torch.Tensor(
+            self.batch_size, self.sequence_length, self.dim).normal_()
+        dec_inputs = torch.LongTensor(
+            self.batch_size, self.sequence_length).clamp_(min=0, max=self.vocab_size - 1)
         decoder = MoChADecoder(vocab_size=self.vocab_size, chunk_size=self.chunk_size)
 
         if torch.cuda.is_available():
@@ -33,8 +32,8 @@ class MoChATest(unittest.TestCase):
     def test_hard(self):
         """Hard Monotonic Chunkwise Attention"""
 
-        enc_outputs = Variable(torch.Tensor(
-            self.batch_size, self.sequence_length, self.dim).normal_(), requires_grad=False)
+        enc_outputs = torch.Tensor(
+            self.batch_size, self.sequence_length, self.dim).normal_()
         decoder = MoChADecoder(
             vocab_size=self.vocab_size, chunk_size=self.chunk_size)
 
