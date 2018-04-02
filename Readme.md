@@ -4,7 +4,7 @@
 
 ## TODOs
 - [x] Soft MoChA
-- [ ] Hard MoChA
+- [x] Hard MoChA
 - [ ] Linear Time Decoding
 - [ ] Experiment with Real-world dataset
 
